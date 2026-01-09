@@ -7,7 +7,7 @@ import {
   signInWithEmailAndPassword 
 } from "firebase/auth";
 
-// --- Auth Modal Component ---
+// --- Auth Modal Component 身份验证弹窗组件 ---
 
 const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
