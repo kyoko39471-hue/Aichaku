@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { X, Plus, Settings2, ChevronLeft, Trash2 } from 'lucide-react';
+import { db } from '../firebase';
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 // --- 1 子组件: 管理列表 (Sub-component: Management View) ---
 const ManagementView = ({ title, list, onAdd, onRemove, onBack }) => {
@@ -45,9 +47,14 @@ const ManagementView = ({ title, list, onAdd, onRemove, onBack }) => {
   );
 };
 
-// --- 2 主组件: 添加物品弹窗 (Main Component: Add Item Modal) ---
+// --- 2 主组件开始啦: 添加物品弹窗 (Main Component: Add Item Modal) ---
 const AddItemModal = ({ isOpen, onClose, user, brands, setBrands, subcategories, setSubcategories }) => {
+
+  // 2.1 UI 控制类 state（view / loading）
   const [view, setView] = useState('main');
+  const [loading, setLoading] = useState(false);
+  
+  // 2.2 表单数据状态
   const [formData, setFormData] = useState({
     category: 'Closet',
     brand: '',
@@ -57,21 +64,73 @@ const AddItemModal = ({ isOpen, onClose, user, brands, setBrands, subcategories,
     timesUsed: '0'
   });
 
-  if (!isOpen) return null;
-
-  // --- 3 提交添加物品的处理函数 - 这里的逻辑暂时保持 console.log，下一阶段我们再接 Firebase 的存储功能 ---
-  const handleAddItem = (e) => {
-    e.preventDefault();
-    console.log("Saving Item for user:", user.uid, formData);
-    onClose();
-  };
-
-// --- 4 添加和删除品牌与子类的函数 ---
+  // 2.3 派生 / 辅助操作（addBrand / removeBrand / addSub / removeSub）添加和删除品牌与子类的函数
   const addBrand = (name) => { if (name && !brands.includes(name)) setBrands([...brands, name]); };
   const removeBrand = (name) => { setBrands(brands.filter(b => b !== name)); };
   const addSub = (name) => { if (name && !subcategories.includes(name)) setSubcategories([...subcategories, name]); };
   const removeSub = (name) => { setSubcategories(subcategories.filter(s => s !== name)); };
 
+  //2.4 核心业务逻辑（handleAddItem）
+  const handleAddItem = async (e) => {
+    e.preventDefault();
+    
+    // 暂时只处理登录用户，未来这里会增加 else { saveToIndexedDB() }
+    if (!user) {
+      alert("Guest mode (IndexedDB) is coming soon! Please sign in for now.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 构造标准化的数据对象
+      const newItem = {
+        name: formData.itemName,
+        category: formData.category,
+        brand: formData.brand,
+        subcategory: formData.subcategory,
+        price: parseFloat(formData.price) || 0,
+        uses: parseInt(formData.timesUsed) || 0,
+        
+        // 核心元数据
+        userId: user.uid,
+        createdAt: serverTimestamp(), // 云端时间
+        updatedAt: serverTimestamp(),
+        
+        // 预留字段：用于未来标记是否是从本地迁移过来的
+        isSynced: true, 
+        source: 'web-cloud'
+      };
+
+      // 写入路径：users/[uid]/items
+      const itemsCollection = collection(db, "users", user.uid, "items");
+      await addDoc(itemsCollection, newItem);
+
+      // 成功后的处理
+      setFormData({
+        category: 'Closet',
+        brand: '',
+        itemName: '',
+        subcategory: '',
+        price: '',
+        timesUsed: '0'
+      });
+      onClose();
+      // 提示：在 PWA 中，静默成功通常比弹窗 alert 体验更好
+      console.log("Item synced to cloud successfully!");
+
+    } catch (error) {
+      console.error("Firebase Save Error:", error);
+      alert("Failed to save: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 2.5. early return（isOpen）渲染部分
+  if (!isOpen) return null;
+
+  // 2.6. JSX return 主渲染返回
   return (
     // --- 弹窗背景和容器, 背景虚化，东西放中间---
     <div className="fixed inset-0 bg-stone-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
