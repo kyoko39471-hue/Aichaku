@@ -19,8 +19,9 @@ import {
   X,
   Settings2, ChevronLeft, Trash2
 } from 'lucide-react';
-import { auth } from './firebase'; 
-import { onAuthStateChanged } from "firebase/auth";
+import { auth, db } from './firebase'; 
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import AuthModal from './components/AuthModal'; //身份验证弹窗组件
 import AddItemModal from './components/AddItemModal'; //添加物品弹窗组件
 
@@ -33,15 +34,52 @@ const App = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'price', direction: 'desc' });
   const [showAddModal, setShowAddModal] = useState(false);
-  const [view, setView] = useState('main'); // 'main', 'manage-brands', 'manage-subs'
 
   // Inside App component:
+  // 用户登录和加载
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (currentUser) {
+        const categoriesRef = doc(db, "users", currentUser.uid, "metadata", "categories");
+        const docSnap = await getDoc(categoriesRef);
+
+        if (docSnap.exists()) {
+          setCategoriesData(docSnap.data());
+        } else {
+          // 初始化默认分类数据
+          const defaultCategories = {
+            brands: {
+              "Closet": ["Nike", "Zara"],
+              "Beauty": ["Chanel", "L'Oreal"],
+              "Appliances": ["Dyson", "Sony"]
+            },
+            subcategories: {
+              "Closet": ["Tops", "Pants"],
+              "Beauty": ["Skincare", "Makeup"],
+              "Appliances": ["Kitchen", "Home"]
+            }
+          };
+          await setDoc(categoriesRef, defaultCategories);
+          setCategoriesData(defaultCategories);
+        }
+      } else {
+        // 用户登出时清空分类数据或重置为默认值
+        setCategoriesData({ brands: {}, subcategories: {} }); 
+      }
     });
-    return () => unsubscribe(); // Cleanup
+    return () => unsubscribe();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      // 不需要 setUser(null)
+      // onAuthStateChanged 会自动处理
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   // Mock Data
   const [items, setItems] = useState([
@@ -51,8 +89,12 @@ const App = () => {
     { id: 4, name: 'Espresso Machine', category: 'Appliances', brand: 'BM', price: 1200, uses: 600, dateAdded: '2022-01-15', image: 'https://images.unsplash.com/photo-1510127034890-ba27508e9f1c?auto=format&fit=crop&q=80&w=200' },
     { id: 5, name: 'Face Cream', category: 'Beauty', brand: 'BM', price: 120, uses: 10, dateAdded: '2023-12-01', image: 'https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?auto=format&fit=crop&q=80&w=200' },
   ]);
-  const [brands, setBrands] = useState(['Nike', 'Apple', 'Chanel', 'Dyson']);
-  const [subcategories, setSubcategories] = useState(['Sneakers', 'Skincare', 'Tech', 'Tops']);
+
+  // 品牌和子类别
+  const [categoriesData, setCategoriesData] = useState({
+    brands: {},
+    subcategories: {}
+  });
 
   const calculateCPU = (price, uses) => (uses === 0 ? price : price / uses);
 
@@ -88,16 +130,6 @@ const App = () => {
   const avgCPU = totalItems > 0 
     ? (items.reduce((acc, item) => acc + calculateCPU(item.price, item.uses), 0) / totalItems).toFixed(2)
     : "0.00";
-
-  // 3. 表单状态 (Form Fields)
-  const [formData, setFormData] = useState({
-    category: 'Closet',
-    brand: '',
-    itemName: '',
-    subcategory: '',
-    price: '',
-    timesUsed: '0'
-  });
   
   // --- 子组件: 管理列表 (Sub-component: Management Views) ---
 
@@ -150,13 +182,13 @@ const App = () => {
                   <p className="text-xs font-bold text-stone-900 truncate">My Account</p>
                   <p className="text-[10px] text-stone-400 truncate">{user.email}</p>
                 </div>
-                <button 
-                  onClick={() => setUser(null)}
-                  className="opacity-0 group-hover:opacity-100 p-1.5 text-stone-400 hover:text-red-500 transition-all"
-                  title="Log out"
-                >
-                  <LogOut size={14} />
-                </button>
+              <button 
+                onClick={handleLogout}
+                className="opacity-0 group-hover:opacity-100 p-1.5 text-stone-400 hover:text-red-500 transition-all"
+                title="Log out"
+              >
+                <LogOut size={14} />
+              </button>
               </div>
             </div>
           )}
@@ -272,15 +304,15 @@ const App = () => {
       />
 
       {/* 4 弹窗 Add Item Modal */}
+      
       <AddItemModal 
         isOpen={showAddModal} 
         onClose={() => setShowAddModal(false)}
         user={user}
-        brands={brands}
-        setBrands={setBrands}
-        subcategories={subcategories}
-        setSubcategories={setSubcategories}
+        categoriesData={categoriesData}
+        setCategoriesData={setCategoriesData}
       />
+      
     </div>
   );
 };

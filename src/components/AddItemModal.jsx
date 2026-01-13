@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { X, Plus, Settings2, ChevronLeft, Trash2 } from 'lucide-react';
 import { db } from '../firebase';
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from "firebase/firestore";
 
 // --- 1 子组件: 管理列表 (Sub-component: Management View) ---
 const ManagementView = ({ title, list, onAdd, onRemove, onBack }) => {
   const [newItem, setNewItem] = useState('');
+
   return (
     <div className="space-y-6">
       {/* Header 比如categories */}
@@ -48,7 +49,7 @@ const ManagementView = ({ title, list, onAdd, onRemove, onBack }) => {
 };
 
 // --- 2 主组件开始啦: 添加物品弹窗 (Main Component: Add Item Modal) ---
-const AddItemModal = ({ isOpen, onClose, user, brands, setBrands, subcategories, setSubcategories }) => {
+const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData }) => {
 
   // 2.1 UI 控制类 state（view / loading）
   const [view, setView] = useState('main');
@@ -65,10 +66,78 @@ const AddItemModal = ({ isOpen, onClose, user, brands, setBrands, subcategories,
   });
 
   // 2.3 派生 / 辅助操作（addBrand / removeBrand / addSub / removeSub）添加和删除品牌与子类的函数
-  const addBrand = (name) => { if (name && !brands.includes(name)) setBrands([...brands, name]); };
-  const removeBrand = (name) => { setBrands(brands.filter(b => b !== name)); };
-  const addSub = (name) => { if (name && !subcategories.includes(name)) setSubcategories([...subcategories, name]); };
-  const removeSub = (name) => { setSubcategories(subcategories.filter(s => s !== name)); };
+  // 通用函数：更新 Firebase 中的分类数据
+  const updateFirebaseCategories = async (uid, type, category, value, action) => {
+    if (!uid || !type || !category || !value) return; // 确保所有参数都存在
+    const categoriesRef = doc(db, "users", uid, "metadata", "categories");
+    const fieldPath = `${type}.${category}`;
+    
+    let updateObject = {};
+    if (action === 'add') {
+      updateObject[fieldPath] = arrayUnion(value);
+    } else if (action === 'remove') {
+      updateObject[fieldPath] = arrayRemove(value);
+    }
+    updateObject.updatedAt = serverTimestamp(); // 记录更新时间
+
+    try {
+      await updateDoc(categoriesRef, updateObject);
+      console.log(`Firebase ${type} for ${category} updated successfully.`);
+    } catch (error) {
+      console.error("Error updating Firebase categories:", error);
+      alert("Failed to update categories in Firebase: " + error.message);
+    }
+  };
+
+  const addBrand = async (name) => {
+    if (!user || !name) return;
+    const currentCategory = formData.category;
+    const currentBrands = categoriesData.brands[currentCategory] || [];
+    if (name && !currentBrands.includes(name)) {
+      // 更新本地状态
+      const newBrands = { ...categoriesData.brands, [currentCategory]: [...currentBrands, name] };
+      setCategoriesData(prev => ({ ...prev, brands: newBrands }));
+      // 同步到 Firebase
+      await updateFirebaseCategories(user.uid, 'brands', currentCategory, name, 'add');
+    }
+  };
+
+  const removeBrand = async (name) => {
+    if (!user || !name) return;
+    const currentCategory = formData.category;
+    const currentBrands = categoriesData.brands[currentCategory] || [];
+    const newBrandsArray = currentBrands.filter(b => b !== name);
+    // 更新本地状态
+    const newBrands = { ...categoriesData.brands, [currentCategory]: newBrandsArray };
+    setCategoriesData(prev => ({ ...prev, brands: newBrands }));
+    // 同步到 Firebase
+    await updateFirebaseCategories(user.uid, 'brands', currentCategory, name, 'remove');
+  };
+
+  const addSub = async (name) => {
+    if (!user || !name) return;
+    const currentCategory = formData.category;
+    const currentSubcategories = categoriesData.subcategories[currentCategory] || [];
+    if (name && !currentSubcategories.includes(name)) {
+      // 更新本地状态
+      const newSubcategories = { ...categoriesData.subcategories, [currentCategory]: [...currentSubcategories, name] };
+      setCategoriesData(prev => ({ ...prev, subcategories: newSubcategories }));
+      // 同步到 Firebase
+      await updateFirebaseCategories(user.uid, 'subcategories', currentCategory, name, 'add');
+    }
+  };
+
+  const removeSub = async (name) => {
+    if (!user || !name) return;
+    const currentCategory = formData.category;
+    const currentSubcategories = categoriesData.subcategories[currentCategory] || [];
+    const newSubcategoriesArray = currentSubcategories.filter(s => s !== name);
+    // 更新本地状态
+    const newSubcategories = { ...categoriesData.subcategories, [currentCategory]: newSubcategoriesArray };
+    setCategoriesData(prev => ({ ...prev, subcategories: newSubcategories }));
+    // 同步到 Firebase
+    await updateFirebaseCategories(user.uid, 'subcategories', currentCategory, name, 'remove');
+  };
 
   //2.4 核心业务逻辑（handleAddItem）
   const handleAddItem = async (e) => {
@@ -181,41 +250,41 @@ const AddItemModal = ({ isOpen, onClose, user, brands, setBrands, subcategories,
 
                     {/* 2. 品牌和子类别：Brand & 4. Subcategory Grid */}
                     <div className="grid grid-cols-2 gap-6">
-                    <div>
+                      <div>
                         <div className="flex justify-between items-center mb-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Brand</label>
-                        <button type="button" onClick={() => setView('manage-brands')} className="text-stone-400 hover:text-stone-900 transition-colors">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Brand</label>
+                          <button type="button" onClick={() => setView('manage-brands')} className="text-stone-400 hover:text-stone-900 transition-colors">
                             <Settings2 size={14} />
-                        </button>
+                          </button>
                         </div>
                         <select 
-                        required
-                        className="w-full bg-stone-50 border-stone-200 border rounded-2xl px-4 py-3 outline-none focus:ring-2 ring-stone-200"
-                        value={formData.brand}
-                        onChange={(e) => setFormData({...formData, brand: e.target.value})}
+                          required
+                          className="w-full bg-stone-50 border-stone-200 border rounded-2xl px-4 py-3 outline-none focus:ring-2 ring-stone-200"
+                          value={formData.brand}
+                          onChange={(e) => setFormData({...formData, brand: e.target.value})}
                         >
-                        <option value="">Select Brand</option>
-                        {brands.map(b => <option key={b} value={b}>{b}</option>)}
+                          <option value="">Select Brand</option>
+                          {categoriesData.brands[formData.category]?.map(b => <option key={b} value={b}>{b}</option>)}
                         </select>
-                    </div>
+                      </div>
 
-                    <div>
+                      <div>
                         <div className="flex justify-between items-center mb-2">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Subcategory</label>
-                        <button type="button" onClick={() => setView('manage-subs')} className="text-stone-400 hover:text-stone-900 transition-colors">
+                          <label className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Subcategory</label>
+                          <button type="button" onClick={() => setView('manage-subs')} className="text-stone-400 hover:text-stone-900 transition-colors">
                             <Settings2 size={14} />
-                        </button>
+                          </button>
                         </div>
                         <select 
-                        required
-                        className="w-full bg-stone-50 border-stone-200 border rounded-2xl px-4 py-3 outline-none focus:ring-2 ring-stone-200"
-                        value={formData.subcategory}
-                        onChange={(e) => setFormData({...formData, subcategory: e.target.value})}
+                          required
+                          className="w-full bg-stone-50 border-stone-200 border rounded-2xl px-4 py-3 outline-none focus:ring-2 ring-stone-200"
+                          value={formData.subcategory}
+                          onChange={(e) => setFormData({...formData, subcategory: e.target.value})}
                         >
-                        <option value="">Select Category</option>
-                        {subcategories.map(s => <option key={s} value={s}>{s}</option>)}
+                          <option value="">Select Subcategory</option>
+                          {categoriesData.subcategories[formData.category]?.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
-                    </div>
+                      </div>
                     </div>
 
                     {/* 3. Item Name */}
@@ -268,22 +337,22 @@ const AddItemModal = ({ isOpen, onClose, user, brands, setBrands, subcategories,
 
                 {/* Management Views */}
                 {view === 'manage-brands' && (
-                <ManagementView 
+                  <ManagementView 
                     title="Brands" 
-                    list={brands} 
+                    list={categoriesData.brands[formData.category] || []} // 动态传递当前类别的品牌列表
                     onAdd={addBrand} 
                     onRemove={removeBrand} 
                     onBack={() => setView('main')} 
-                />
+                  />
                 )}
                 {view === 'manage-subs' && (
-                <ManagementView 
+                  <ManagementView 
                     title="Subcategories" 
-                    list={subcategories} 
+                    list={categoriesData.subcategories[formData.category] || []} // 动态传递当前类别的子类别列表
                     onAdd={addSub} 
                     onRemove={removeSub} 
                     onBack={() => setView('main')} 
-                />
+                  />
                 )}
             </div>
         </div>
