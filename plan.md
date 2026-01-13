@@ -1,7 +1,18 @@
-# To do
--> hook
+# Ticket
+-> Reward Earned 没有计算公式，只是一个ui标签
+-> 第一页的rendering
 
 # Progress
+
+7. fix subcategory & brands
+    1) [x] Logout done
+    2) [x] Subcategories done
+    3) [x] Manus用完
+    4) [x] 第3次用manus
+    5) [x] 上传已有的代码
+    6) [x] Manus两个questions
+    7) [x] npm run build & deploy - git updated
+    8) [x] remove pre-filled info
 6. Implement the Firebase Firestore logic in "AddItemModal"
     1) [x] Firebase.js updated
     2) [x] AddItemModal.jsx import
@@ -24,29 +35,3 @@
 3. [x] Modularize AuthModal
 2. [x] Initialize firebase project & AuthModal
 1. [x] connect to Github
-
-
-# Note 
-四、架构层面的评价（你现在在哪个阶段）
-
-从这份代码可以看出：
-
-你已经脱离“把逻辑写进 JSX”的阶段
-
-开始有 数据模型意识
-
-开始考虑 离线 / 同步 / 演进
-
-目前的问题不是“React 不熟”，而是：
-
-单个组件开始承担过多领域责任
-
-下一阶段自然的演进方向是：
-
-useAddItem() 自定义 hook
-
-Brand/Subcategory 管理独立状态源
-
-Modal 只负责 UI + 调度
-
-但现在不拆是完全合理的。

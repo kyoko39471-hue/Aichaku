@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Plus, 
@@ -50,14 +50,14 @@ const App = () => {
           // 初始化默认分类数据
           const defaultCategories = {
             brands: {
-              "Closet": ["Nike", "Zara"],
-              "Beauty": ["Chanel", "L'Oreal"],
-              "Appliances": ["Dyson", "Sony"]
+              "Closet": [],
+              "Beauty": [],
+              "Appliances": []
             },
             subcategories: {
-              "Closet": ["Tops", "Pants"],
-              "Beauty": ["Skincare", "Makeup"],
-              "Appliances": ["Kitchen", "Home"]
+              "Closet": [],
+              "Beauty": [],
+              "Appliances": []
             }
           };
           await setDoc(categoriesRef, defaultCategories);
@@ -81,14 +81,8 @@ const App = () => {
     }
   };
 
-  // Mock Data
-  const [items, setItems] = useState([
-    { id: 1, name: 'Wool Trench Coat', category: 'Closet', brand: 'BM', price: 500, uses: 20, dateAdded: '2023-10-12', image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&q=80&w=200' },
-    { id: 2, name: 'Leather Tote', category: 'Closet', brand: 'BM', price: 300, uses: 150, dateAdded: '2023-08-05', image: 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&q=80&w=200' },
-    { id: 3, name: 'Vitamin C Serum', category: 'Beauty', brand: 'BM', price: 80, uses: 40, dateAdded: '2023-11-20', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&q=80&w=200' },
-    { id: 4, name: 'Espresso Machine', category: 'Appliances', brand: 'BM', price: 1200, uses: 600, dateAdded: '2022-01-15', image: 'https://images.unsplash.com/photo-1510127034890-ba27508e9f1c?auto=format&fit=crop&q=80&w=200' },
-    { id: 5, name: 'Face Cream', category: 'Beauty', brand: 'BM', price: 120, uses: 10, dateAdded: '2023-12-01', image: 'https://images.unsplash.com/photo-1556229010-6c3f2c9ca5f8?auto=format&fit=crop&q=80&w=200' },
-  ]);
+  // 空数组表示初始状态
+  const [items, setItems] = useState([]);
 
   // 品牌和子类别
   const [categoriesData, setCategoriesData] = useState({
@@ -231,7 +225,7 @@ const App = () => {
             <div className="bg-stone-900 text-white p-6 rounded-3xl shadow-lg flex items-center justify-between">
               <div>
                 <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-2">Reward Earned</p>
-                <p className="text-3xl font-serif italic text-amber-400">$45.00</p>
+                <p className="text-3xl font-serif italic text-amber-400">$0.00</p>
               </div>
               <Award size={40} className="text-amber-400 opacity-50" />
             </div>
