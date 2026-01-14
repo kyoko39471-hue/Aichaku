@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Plus, Settings2, ChevronLeft, Trash2 } from 'lucide-react';
-import { db } from '../firebase';
+import { db } from '../../firebase';
 import { collection, addDoc, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from "firebase/firestore";
 
 // --- 1 子组件: 管理列表 (Sub-component: Management View) ---

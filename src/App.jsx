@@ -22,8 +22,8 @@ import {
 import { auth, db } from './firebase'; 
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import AuthModal from './components/AuthModal'; //身份验证弹窗组件
-import AddItemModal from './components/AddItemModal'; //添加物品弹窗组件
+import AuthModal from './components/modals/AuthModal';
+import AddItemModal from './components/modals/AddItemModal';
 
 // --- Main App Component ---
 const App = () => {

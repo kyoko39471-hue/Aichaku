@@ -1,16 +1,137 @@
-# React + Vite
+# Aichaku
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aichaku is a React + Firebase application for tracking personal items and computing **cost per use (CPU)**. The codebase is structured to enforce strict separation between UI, stateful logic, and data access.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Stack
 
-## React Compiler
+* React (Vite)
+* Tailwind CSS
+* Firebase Auth
+* Firestore
+* lucide-react
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## Directory Structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```
+src/
+├── App.jsx            # App-level orchestration only
+├── main.jsx           # React bootstrap
+├── firebase.js        # Firebase init (auth, db)
+│
+├── hooks/             # Stateful logic (no JSX)
+│   ├── useAuth.js
+│   ├── useCategories.js
+│   └── useItems.js
+│
+├── services/          # External data access (no React)
+│   └── firestoreService.js
+│
+├── components/        # Pure UI (JSX only)
+│   ├── layout/
+│   ├── dashboard/
+│   └── modals/
+│
+└── utils/             # Pure functions
+    ├── calculations.js
+    ├── currency.js
+    └── date.js
+```
+
+---
+
+## Architectural Rules
+
+1. **Components**
+
+   * Render UI only
+   * Never access Firestore directly
+
+2. **Hooks**
+
+   * Own state and side effects
+   * Call `services`, expose data + handlers to UI
+
+3. **Services**
+
+   * Plain JavaScript
+   * Firestore CRUD only
+   * No React imports
+
+4. **Utils**
+
+   * Pure, deterministic helpers
+
+---
+
+## Data Flow
+
+```
+components → hooks → services → Firestore
+```
+
+Reverse dependencies are not allowed.
+
+---
+
+## Authentication
+
+* Managed in `useAuth`
+* App reacts to auth state declaratively
+* Logout handled via Firebase Auth and propagated automatically
+
+---
+
+## Firestore Model (Conceptual)
+
+* User-scoped data only
+* Paths include `user.uid`
+
+Example:
+
+```
+users/{uid}/items/{itemId}
+users/{uid}/metadata/categories
+```
+
+Firestore rules are expected to enforce:
+
+```
+request.auth.uid == userId
+```
+
+---
+
+## Cost Per Use (CPU)
+
+```js
+cpu = uses === 0 ? price : price / uses
+```
+
+Centralized in `utils/calculations.js`.
+
+---
+
+## Local Development
+
+```
+npm install
+npm run dev
+```
+
+Firebase config must be provided in `firebase.js`.
+
+---
+
+## Project Intent
+
+This codebase prioritizes:
+
+* Predictable data flow
+* Explicit boundaries
+* Ease of refactoring
+
+Features may evolve; structure is considered stable.

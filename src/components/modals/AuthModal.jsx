@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock } from 'lucide-react';
-import { auth } from '../firebase'; // 注意路径，因为在 components 文件夹里，所以是 ../
-//..：在电脑路径里，这两个点代表**“向上一层”**。./：这代表**“就在当前文件夹里”**。
+import { auth } from '../../firebase';  
+
 import { 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword 

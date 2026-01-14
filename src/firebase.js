@@ -1,3 +1,4 @@
+//负责配置信息和初始化 Firebase 服务
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { 
