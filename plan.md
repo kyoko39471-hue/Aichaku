@@ -1,11 +1,16 @@
 # Ticket
 -> Reward Earned 没有计算公式，只是一个ui标签
 -> ItemsTable.jsx 
+    - useAuth.js
+    - useItems.js
+    - ItemsTable.jsx
 
 # Progress
-10. ItemsTable.jsx 
-9. generate modals 这个文件夹
-8. modularization plan
+12. useAuth.js
+11. [x] firestoreService.js
+10. [x] calculations.js
+9. [x] generate modals 这个文件夹
+8. [x] modularization plan
 7. fix subcategory & brands
     1) [x] Logout done
     2) [x] Subcategories done
@@ -70,5 +75,5 @@ src/
 │
 ├── firebase.js //负责配置信息和初始化 Firebase 
 └── services/      
-    └── firestoreService.js //负责所有的增、删、改、查
+    └── firestoreService.js //负责所有的增、删、改、查 App.jsx stops importing Firestore directly
 

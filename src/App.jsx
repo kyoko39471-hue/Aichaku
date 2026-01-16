@@ -19,11 +19,12 @@ import {
   X,
   Settings2, ChevronLeft, Trash2
 } from 'lucide-react';
-import { auth, db } from './firebase'; 
+import { auth } from './firebase'; 
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { useCategories } from './hooks/useCategories';
 import AuthModal from './components/modals/AuthModal';
 import AddItemModal from './components/modals/AddItemModal';
+import { calculateCPU, calculateAverageCPU, compareByCPU } from './utils/calculations';
 
 // --- Main App Component ---
 const App = () => {
@@ -36,41 +37,15 @@ const App = () => {
   const [showAddModal, setShowAddModal] = useState(false);
 
   // Inside App component:
-  // 用户登录和加载
+  // 用户登录
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      if (currentUser) {
-        const categoriesRef = doc(db, "users", currentUser.uid, "metadata", "categories");
-        const docSnap = await getDoc(categoriesRef);
-
-        if (docSnap.exists()) {
-          setCategoriesData(docSnap.data());
-        } else {
-          // 初始化默认分类数据
-          const defaultCategories = {
-            brands: {
-              "Closet": [],
-              "Beauty": [],
-              "Appliances": []
-            },
-            subcategories: {
-              "Closet": [],
-              "Beauty": [],
-              "Appliances": []
-            }
-          };
-          await setDoc(categoriesRef, defaultCategories);
-          setCategoriesData(defaultCategories);
-        }
-      } else {
-        // 用户登出时清空分类数据或重置为默认值
-        setCategoriesData({ brands: {}, subcategories: {} }); 
-      }
     });
     return () => unsubscribe();
   }, []);
 
+  // 用户登出
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -81,16 +56,11 @@ const App = () => {
     }
   };
 
+  // 加载：使用自定义 Hook 获取和管理分类数据
+  const { categoriesData, setCategoriesData } = useCategories(user);
+
   // 空数组表示初始状态
   const [items, setItems] = useState([]);
-
-  // 品牌和子类别
-  const [categoriesData, setCategoriesData] = useState({
-    brands: {},
-    subcategories: {}
-  });
-
-  const calculateCPU = (price, uses) => (uses === 0 ? price : price / uses);
 
   const filteredAndSortedItems = useMemo(() => {
     let result = items.filter(item => 
@@ -98,15 +68,21 @@ const App = () => {
       item.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    if (sortConfig.key) {
-      result.sort((a, b) => {
-        let valA = sortConfig.key === 'cpu' ? calculateCPU(a.price, a.uses) : a[sortConfig.key];
-        let valB = sortConfig.key === 'cpu' ? calculateCPU(b.price, b.uses) : b[sortConfig.key];
-        if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
+  if (sortConfig.key) {
+    result.sort((a, b) => {
+      if (sortConfig.key === 'cpu') {
+        return compareByCPU(a, b, sortConfig.direction);
+      }
+
+      const valA = a[sortConfig.key];
+      const valB = b[sortConfig.key];
+
+      if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
+      if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
     return result;
   }, [items, activeCategory, searchQuery, sortConfig]);
 
@@ -120,10 +96,7 @@ const App = () => {
     setItems(items.map(item => item.id === id ? { ...item, uses: item.uses + 1 } : item));
   };
 
-  const totalItems = items.length;
-  const avgCPU = totalItems > 0 
-    ? (items.reduce((acc, item) => acc + calculateCPU(item.price, item.uses), 0) / totalItems).toFixed(2)
-    : "0.00";
+  const avgCPU = calculateAverageCPU(items).toFixed(2);
   
   // --- 子组件: 管理列表 (Sub-component: Management Views) ---
 

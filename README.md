@@ -126,12 +126,26 @@ Firebase config must be provided in `firebase.js`.
 
 ---
 
-## Project Intent
+## Notes
 
-This codebase prioritizes:
+### CPU (Cost per Use)
+An unused item’s cost-per-use equals full price
+No division by zero
+CPU is always ≥ 0
 
-* Predictable data flow
-* Explicit boundaries
-* Ease of refactoring
+### firestoreService.js:
+It only talks to Firestore
+It never touches React state
+It never imports React or hooks
+It returns plain data or throws errors
 
-Features may evolve; structure is considered stable.
+functions: 
+// categories
+getOrCreateCategories(uid)
+updateCategories(uid, newCategories)
+
+// items
+getItems(uid)
+addItem(uid, itemData)
+incrementItemUsage(uid, itemId)
+deleteItem(uid, itemId)
