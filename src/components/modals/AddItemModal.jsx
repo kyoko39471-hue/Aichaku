@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { X, Plus, Settings2, ChevronLeft, Trash2 } from 'lucide-react';
 import { db } from '../../firebase';
-import { collection, addDoc, doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from "firebase/firestore";
+import { doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from "firebase/firestore";
 
 // --- 1 子组件: 管理列表 (Sub-component: Management View) ---
 const ManagementView = ({ title, list, onAdd, onRemove, onBack }) => {
@@ -49,7 +49,7 @@ const ManagementView = ({ title, list, onAdd, onRemove, onBack }) => {
 };
 
 // --- 2 主组件开始啦: 添加物品弹窗 (Main Component: Add Item Modal) ---
-const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData }) => {
+const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData, addItem }) => {
 
   // 2.1 UI 控制类 state（view / loading）
   const [view, setView] = useState('main');
@@ -142,8 +142,7 @@ const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData
   //2.4 核心业务逻辑（handleAddItem）
   const handleAddItem = async (e) => {
     e.preventDefault();
-    
-    // 暂时只处理登录用户，未来这里会增加 else { saveToIndexedDB() }
+
     if (!user) {
       alert("Guest mode (IndexedDB) is coming soon! Please sign in for now.");
       return;
@@ -152,7 +151,6 @@ const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData
     setLoading(true);
 
     try {
-      // 构造标准化的数据对象
       const newItem = {
         name: formData.itemName,
         category: formData.category,
@@ -160,22 +158,11 @@ const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData
         subcategory: formData.subcategory,
         price: parseFloat(formData.price) || 0,
         uses: parseInt(formData.timesUsed) || 0,
-        
-        // 核心元数据
-        userId: user.uid,
-        createdAt: serverTimestamp(), // 云端时间
-        updatedAt: serverTimestamp(),
-        
-        // 预留字段：用于未来标记是否是从本地迁移过来的
-        isSynced: true, 
-        source: 'web-cloud'
       };
 
-      // 写入路径：users/[uid]/items
-      const itemsCollection = collection(db, "users", user.uid, "items");
-      await addDoc(itemsCollection, newItem);
+      // 👇 唯一的“写入动作”
+      await addItem(newItem);
 
-      // 成功后的处理
       setFormData({
         category: 'Closet',
         brand: '',
@@ -184,13 +171,11 @@ const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData
         price: '',
         timesUsed: '0'
       });
-      onClose();
-      // 提示：在 PWA 中，静默成功通常比弹窗 alert 体验更好
-      console.log("Item synced to cloud successfully!");
 
+      onClose();
     } catch (error) {
-      console.error("Firebase Save Error:", error);
-      alert("Failed to save: " + error.message);
+      console.error("Add item failed:", error);
+      alert("Failed to save item.");
     } finally {
       setLoading(false);
     }

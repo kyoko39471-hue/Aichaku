@@ -149,3 +149,15 @@ getItems(uid)
 addItem(uid, itemData)
 incrementItemUsage(uid, itemId)
 deleteItem(uid, itemId)
+
+### useAuth.js
+useAuth.js 只做三件事：
+监听 Firebase Auth 状态
+暴露 user
+暴露 logout()
+
+它 不做：
+Firestore
+categories
+items
+modal 状态

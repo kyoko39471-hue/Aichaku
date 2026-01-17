@@ -19,9 +19,9 @@ import {
   X,
   Settings2, ChevronLeft, Trash2
 } from 'lucide-react';
-import { auth } from './firebase'; 
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { useAuth } from './hooks/useAuth';
 import { useCategories } from './hooks/useCategories';
+import { useItems } from './hooks/useItems';
 import AuthModal from './components/modals/AuthModal';
 import AddItemModal from './components/modals/AddItemModal';
 import { calculateCPU, calculateAverageCPU, compareByCPU } from './utils/calculations';
@@ -29,38 +29,25 @@ import { calculateCPU, calculateAverageCPU, compareByCPU } from './utils/calcula
 // --- Main App Component ---
 const App = () => {
   // State Management
-  const [user, setUser] = useState(null);
+  const { user, logout } = useAuth();   // 用户登录，用户登出
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'price', direction: 'desc' });
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // Inside App component:
-  // 用户登录
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-    return () => unsubscribe();
-  }, []);
+// Inside App component:
 
-  // 用户登出
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      // 不需要 setUser(null)
-      // onAuthStateChanged 会自动处理
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
-  };
-
-  // 加载：使用自定义 Hook 获取和管理分类数据
+  // hook加载categories数据
   const { categoriesData, setCategoriesData } = useCategories(user);
 
-  // 空数组表示初始状态
-  const [items, setItems] = useState([]);
+  const {
+    items,
+    loading,
+    addItem,
+    logUsage,
+    deleteItem
+  } = useItems(user);
 
   const filteredAndSortedItems = useMemo(() => {
     let result = items.filter(item => 
@@ -90,10 +77,6 @@ const App = () => {
     let direction = 'desc';
     if (sortConfig.key === key && sortConfig.direction === 'desc') direction = 'asc';
     setSortConfig({ key, direction });
-  };
-
-  const logUsage = (id) => {
-    setItems(items.map(item => item.id === id ? { ...item, uses: item.uses + 1 } : item));
   };
 
   const avgCPU = calculateAverageCPU(items).toFixed(2);
@@ -150,7 +133,7 @@ const App = () => {
                   <p className="text-[10px] text-stone-400 truncate">{user.email}</p>
                 </div>
               <button 
-                onClick={handleLogout}
+                onClick={logout}
                 className="opacity-0 group-hover:opacity-100 p-1.5 text-stone-400 hover:text-red-500 transition-all"
                 title="Log out"
               >
@@ -264,10 +247,10 @@ const App = () => {
       </main>
 
       {/* 3 弹窗 Auth Modal */}
-      <AuthModal 
-        isOpen={showAuthModal} 
-        onClose={() => setShowAuthModal(false)} 
-        onAuthSuccess={(userData) => setUser(userData)} 
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={() => setShowAuthModal(false)}
       />
 
       {/* 4 弹窗 Add Item Modal */}
