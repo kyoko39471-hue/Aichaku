@@ -1,7 +1,59 @@
 import { useState } from 'react';
-import { X, Plus, Settings2, ChevronLeft, Trash2 } from 'lucide-react';
+import { X, Plus, Settings2, ChevronLeft, Trash2, Smile} from 'lucide-react';
 import { db } from '../../firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from "firebase/firestore";
+import Icon from '../Icon';
+import {
+  CLOSET_ICON_NAMES,
+  BEAUTY_ICON_NAMES,
+  APPLIANCE_ICON_NAMES,
+} from '../../icons/iconMap';
+
+// --- 预设图标 / Emoji 库 ---
+const ICON_SUGGESTIONS = {
+  Closet: [
+    ...CLOSET_ICON_NAMES.map(name => ({
+      type: 'custom',
+      value: name,
+    })),
+    { type: 'emoji', value: '👕' },
+    { type: 'emoji', value: '👗' },
+    { type: 'emoji', value: '👔' },
+    { type: 'emoji', value: '👖' },
+  ],
+  Beauty: [
+    ...BEAUTY_ICON_NAMES.map(name => ({
+      type: 'custom',
+      value: name,
+    })),
+    { type: 'emoji', value: '💄' },
+    { type: 'emoji', value: '🧴' },
+    { type: 'emoji', value: '💅' },
+    { type: 'emoji', value: '✨' },
+  ],
+  Appliances: [
+    ...APPLIANCE_ICON_NAMES.map(name => ({
+      type: 'custom',
+      value: name,
+    })),
+    { type: 'emoji', value: '💻' },
+    { type: 'emoji', value: '📱' },
+  ],
+};
+
+const renderEmojiLikeIcon = (icon, size = 32) => {
+  if (!icon) return null;
+
+  if (icon.type === 'emoji') {
+    return <span style={{ fontSize: size }}>{icon.value}</span>;
+  }
+
+  if (icon.type === 'custom') {
+    return <Icon name={icon.value} size={size} />;
+  }
+
+  return null;
+};
 
 // --- 1 子组件: 管理列表 (Sub-component: Management View) ---
 const ManagementView = ({ title, list, onAdd, onRemove, onBack }) => {
@@ -54,10 +106,12 @@ const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData
   // 2.1 UI 控制类 state（view / loading）
   const [view, setView] = useState('main');
   const [loading, setLoading] = useState(false);
+  const [showIconPicker, setShowIconPicker] = useState(false);
   
   // 2.2 表单数据状态
   const [formData, setFormData] = useState({
     category: 'Closet',
+    icon: ICON_SUGGESTIONS['Closet'][0],
     brand: '',
     itemName: '',
     subcategory: '',
@@ -207,6 +261,43 @@ const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData
                     </button>
                 </div>
                 )}
+
+                {/* 图标选择预览区 */}
+                <div className="flex justify-center mb-4">
+                  <div className="relative group">
+                    <button 
+                      type="button"
+                      onClick={() => setShowIconPicker(!showIconPicker)}
+                      className="w-24 h-24 rounded-3xl bg-stone-50 border-2 border-dashed border-stone-200 flex items-center justify-center text-4xl hover:border-stone-900 hover:bg-white transition-all shadow-inner group"
+                    >
+                      {renderEmojiLikeIcon(formData.icon, 36)}
+                      <div className="absolute -bottom-2 -right-2 bg-stone-900 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Smile size={14} />
+                      </div>
+                    </button>
+                    
+                    {/* 图标选择浮窗 */}
+                    {showIconPicker && (
+                      <div className="absolute top-full mt-4 left-1/2 -translate-x-1/2 w-64 bg-white border border-stone-100 shadow-2xl rounded-2xl p-4 z-10 animate-in fade-in zoom-in duration-200">
+                        <div className="grid grid-cols-5 gap-2">
+                          {ICON_SUGGESTIONS[formData.category]?.map((icon, index) => (
+                            <button
+                              key={`${icon.type}-${icon.value}-${index}`}
+                              type="button"
+                              onClick={() => {
+                                setFormData({ ...formData, icon });
+                                setShowIconPicker(false);
+                              }}
+                              className="w-10 h-10 flex items-center justify-center hover:bg-stone-100 rounded-lg transition-colors"
+                            >
+                              {renderEmojiLikeIcon(icon, 20)}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
 
                 {/* Main Form View */}
                 {view === 'main' && (
