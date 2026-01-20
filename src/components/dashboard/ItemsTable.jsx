@@ -1,5 +1,20 @@
 import { ArrowUpDown, CheckCircle2, Filter } from 'lucide-react';
 import { calculateCPU } from '../../utils/calculations';
+import Icon from '../Icon';
+
+const renderItemIcon = (item, size = 40) => {
+  if (!item.iconType || !item.iconValue) return null;
+
+  if (item.iconType === 'emoji') {
+    return <span style={{ fontSize: size }}>{item.iconValue}</span>;
+  }
+
+  if (item.iconType === 'custom') {
+    return <Icon name={item.iconValue} size={size} />;
+  }
+
+  return null;
+};
 
 const ItemsTable = ({
   items,
@@ -55,11 +70,10 @@ const ItemsTable = ({
             >
               <td className="px-6 py-4">
                 <div className="flex items-center gap-3">
-                  <img
-                    src={item.image}
-                    className="w-10 h-10 rounded-lg object-cover shadow-sm"
-                    alt=""
-                  />
+                  <div className="w-10 h-10 rounded-lg bg-stone-50 flex items-center justify-center shadow-sm">
+                    {renderItemIcon(item, 24)}
+                  </div>
+
                   <div>
                     <p className="text-sm font-semibold">{item.name}</p>
                     <p className="text-[10px] text-stone-400 uppercase font-bold tracking-tighter">

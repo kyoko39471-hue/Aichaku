@@ -1,13 +1,10 @@
 # Ticket
 -> AddItemsModal.jsx - 设计图标功能
-    1) 能够设计图标并放到软件里，UI实现。
-    2) firestore
+    default icon setup
 -> ItemsTable.jsx
-    1）图标问题
     1) beauty旁边是要写 subcategory的
     2）sorting：brand也要可以排序哦
-    3）all collection存在的意义是什么？
-    4）filter功能是死的
+    3）filter功能是死的
 -> StatsGrid.jsx
     1) Reward Earned 没有计算公式，只是一个ui标签
 -> Search: 不能search for brand？？？不能search for category？？？
@@ -16,8 +13,10 @@
 -> 新用户没有试用功能
 
 # Progress
+17. AddItemsModal.jsx - default icon setup 
 16. AddItemsModal.jsx - firestore
-    1) 
+    1) git push
+    2) firestore can store the icons now
 15. AddItemsModal.jsx - 能够设计图标并放到软件里，UI实现。
     1) 先生成了放图标的UI，加入了emoji
     2) use **nano-banana** to generate png icons，then, use python to write code (convert.py) to convert png into svg

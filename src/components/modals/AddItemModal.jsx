@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Plus, Settings2, ChevronLeft, Trash2, Smile} from 'lucide-react';
 import { db } from '../../firebase';
 import { doc, updateDoc, arrayUnion, arrayRemove, serverTimestamp } from "firebase/firestore";
@@ -107,6 +107,7 @@ const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData
   const [view, setView] = useState('main');
   const [loading, setLoading] = useState(false);
   const [showIconPicker, setShowIconPicker] = useState(false);
+  const [iconTouched, setIconTouched] = useState(false);
   
   // 2.2 表单数据状态
   const [formData, setFormData] = useState({
@@ -118,6 +119,17 @@ const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData
     price: '',
     timesUsed: '0'
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      setIconTouched(false);
+      setFormData(prev => ({
+        ...prev,
+        category: 'Closet',
+        icon: ICON_SUGGESTIONS['Closet'][0],
+      }));
+    }
+  }, [isOpen]);
 
   // 2.3 派生 / 辅助操作（addBrand / removeBrand / addSub / removeSub）添加和删除品牌与子类的函数
   // 通用函数：更新 Firebase 中的分类数据
@@ -192,6 +204,24 @@ const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData
     // 同步到 Firebase
     await updateFirebaseCategories(user.uid, 'subcategories', currentCategory, name, 'remove');
   };
+  const handleCategoryChange = (newCategory) => {
+    setFormData(prev => {
+      // 如果用户已经选过 icon，就不动 icon
+      if (iconTouched) {
+        return {
+          ...prev,
+          category: newCategory,
+        };
+      }
+
+      // 否则，自动切换为该分类的默认 icon
+      return {
+        ...prev,
+        category: newCategory,
+        icon: ICON_SUGGESTIONS[newCategory]?.[0] ?? null,
+      };
+    });
+  };
 
   //2.4 核心业务逻辑（handleAddItem）
   const handleAddItem = async (e) => {
@@ -212,6 +242,10 @@ const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData
         subcategory: formData.subcategory,
         price: parseFloat(formData.price) || 0,
         uses: parseInt(formData.timesUsed) || 0,
+
+         // ⭐ 新增
+        iconType: formData.icon?.type ?? null,
+        iconValue: formData.icon?.value ?? null,
       };
 
       // 👇 唯一的“写入动作”
@@ -286,6 +320,7 @@ const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData
                               type="button"
                               onClick={() => {
                                 setFormData({ ...formData, icon });
+                                setIconTouched(true);
                                 setShowIconPicker(false);
                               }}
                               className="w-10 h-10 flex items-center justify-center hover:bg-stone-100 rounded-lg transition-colors"
@@ -311,7 +346,7 @@ const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData
                         <button
                             key={cat}
                             type="button"
-                            onClick={() => setFormData({...formData, category: cat})}
+                            onClick={() => handleCategoryChange(cat)}
                             className={`py-3 rounded-2xl text-xs font-bold transition-all border ${
                             formData.category === cat 
                             ? 'bg-stone-900 text-white border-stone-900 shadow-lg' 
