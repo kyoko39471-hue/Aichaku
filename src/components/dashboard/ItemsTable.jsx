@@ -1,4 +1,4 @@
-import { ArrowUpDown, CheckCircle2, Filter } from 'lucide-react';
+import { ArrowUpDown, CheckCircle2, Filter, Pencil, Trash2} from 'lucide-react';
 import { calculateCPU } from '../../utils/calculations';
 import Icon from '../Icon';
 
@@ -27,7 +27,7 @@ const ItemsTable = ({
       <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
         <h2 className="font-serif text-lg">{activeCategory} Collection</h2>
         <button className="p-2 hover:bg-white rounded-lg border border-transparent hover:border-stone-200 transition-all">
-          <Filter size={16} />
+          <Filter size={14} /> 
         </button>
       </div>
 
@@ -35,7 +35,12 @@ const ItemsTable = ({
         <thead>
           <tr className="text-[10px] font-bold text-stone-400 uppercase tracking-widest border-b border-stone-100">
             <th className="px-6 py-4">Item</th>
-            <th className="px-6 py-4">Brand</th>
+            <th 
+              className="px-6 py-4 cursor-pointer hover:text-stone-900"
+              onClick={() => requestSort('brand')}
+            >
+              Brand <ArrowUpDown size={10} className="inline ml-1" />
+            </th>
 
             <th
               className="px-6 py-4 cursor-pointer hover:text-stone-900"
@@ -100,12 +105,28 @@ const ItemsTable = ({
               </td>
 
               <td className="px-6 py-4 text-right">
-                <button
-                  onClick={() => logUsage(item.id)}
-                  className="opacity-0 group-hover:opacity-100 flex items-center gap-1 ml-auto bg-stone-900 text-white text-[10px] px-3 py-1.5 rounded-full font-bold uppercase transition-all hover:scale-105 shadow-md"
-                >
-                  <CheckCircle2 size={12} /> Log Use
-                </button>
+                <div className="flex items-center justify-end gap-1.5">
+                  <button
+                    title="Log Usage"
+                    onClick={() => logUsage(item.id)}
+                    className="p-2 bg-stone-100 text-stone-400 hover:bg-stone-900 hover:text-white rounded-xl transition-all shadow-sm"
+                  >
+                    <CheckCircle2 size={12} /> 
+                  </button>
+                  <button 
+                    title="Edit Item"
+                    className="p-2 bg-stone-100 text-stone-400 hover:bg-stone-900 hover:text-white rounded-xl transition-all shadow-sm"
+                  >
+                    <Pencil size={15} />
+                  </button>
+                  <button 
+                    onClick={() => deleteItem(item.id)}
+                    title="Delete Item"
+                    className="p-2 bg-stone-100 text-stone-400 hover:bg-red-500 hover:text-white rounded-xl transition-all shadow-sm"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
               </td>
             </tr>
           ))}

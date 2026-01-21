@@ -1,18 +1,36 @@
 # Ticket
--> AddItemsModal.jsx - 设计图标功能
-    default icon setup
+-> EditItemModal.jsx
 -> ItemsTable.jsx
-    1) beauty旁边是要写 subcategory的
-    2）sorting：brand也要可以排序哦
-    3）filter功能是死的
+    1) three buttons
+        a. log
+        b. edit
+        c. delete
+    2) category 旁边是要写 subcategory的  
+    3) sorting：brand也要可以排序哦，by default怎么是price呢？
+    4) filter功能是死的
+        - All Items
+        - Best Value (CPU < $3)
+        - Neglected (< 5 uses)
+        - New Arrivals (Added Recently)
+        - Cost-Heavy (CPU>$20)
+    5) Search: 不能search for brand？？？不能search for category？？？
+    6) 是不是得加一个subcategory的单独列，来排序
 -> StatsGrid.jsx
-    1) Reward Earned 没有计算公式，只是一个ui标签
--> Search: 不能search for brand？？？不能search for category？？？
--> 没有log 功能
--> 没有journal功能
--> 新用户没有试用功能
+    1) reward design: Reward = Σ（每个 item 的 CPU 下降量
+-> Journal page
+-> Other: 新用户没有试用功能
 
 # Progress
+19. firestoreService.js 有了edit功能。
+18. ItemsTable.jsx - design
+    1) log, edit, delete three button appearances 
+    2) filter selections design
+        - All Items
+        - Best Value (CPU < $3)
+        - Neglected (< 5 uses)
+        - New Arrivals (Added Recently)
+        - Cost-Heavy (CPU>$20)
+    3) reward design: Reward = Σ（每个 item 的 CPU 下降量）
 17. AddItemsModal.jsx - default icon setup 
 16. AddItemsModal.jsx - firestore
     1) git push

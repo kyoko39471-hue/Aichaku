@@ -74,6 +74,7 @@ const App = () => {
     return result;
   }, [items, activeCategory, searchQuery, sortConfig]);
 
+  // Sorting handler
   const requestSort = (key) => {
     let direction = 'desc';
     if (sortConfig.key === key && sortConfig.direction === 'desc') direction = 'asc';
@@ -182,7 +183,7 @@ const App = () => {
             <div className="bg-stone-900 text-white p-6 rounded-3xl shadow-lg flex items-center justify-between">
               <div>
                 <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-2">Reward Earned</p>
-                <p className="text-3xl font-serif italic text-amber-400">$0.00</p>
+                <p className="text-3xl font-serif italic text-amber-400">$5.00</p>
               </div>
               <Award size={40} className="text-amber-400 opacity-50" />
             </div>

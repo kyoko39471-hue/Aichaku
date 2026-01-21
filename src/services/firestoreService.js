@@ -74,12 +74,26 @@ export const addItem = async (uid, itemData) => {
   };
 };
 
-export const incrementItemUsage = async (uid, itemId) => {
+export const incrementItemUsage = async (uid, itemId,localDate) => {
   const ref = doc(db, 'users', uid, 'items', itemId);
-  await updateDoc(ref, { uses: increment(1) });
+
+  await updateDoc(ref, {
+    uses: increment(1),
+    lastUsedAt: serverTimestamp(),
+    lastUsedLocalDate: localDate, // 'YYYY-MM-DD'
+  });
 };
 
 export const deleteItem = async (uid, itemId) => {
   const ref = doc(db, 'users', uid, 'items', itemId);
   await deleteDoc(ref);
+};
+
+export const updateItem = async (uid, itemId, updates) => {
+  const ref = doc(db, 'users', uid, 'items', itemId);
+
+  await updateDoc(ref, {
+    ...updates,
+    updatedAt: serverTimestamp()
+  });
 };
