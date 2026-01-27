@@ -41,7 +41,7 @@ const ItemsTable = ({
     setIsEditModalOpen(false);
     setItemToEdit(null);
   };
-  console.log('categoriesData:', categoriesData);
+
   return (
     <div className="bg-white rounded-3xl border border-stone-200 shadow-sm overflow-hidden">
       <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
@@ -54,7 +54,14 @@ const ItemsTable = ({
       <table className="w-full text-left">
         <thead>
           <tr className="text-[10px] font-bold text-stone-400 uppercase tracking-widest border-b border-stone-100">
-            <th className="px-6 py-4">Item</th>
+            
+            <th 
+              className="px-6 py-4 cursor-pointer hover:text-stone-900 transition-colors"
+              onClick={() => requestSort('subcategory')}
+            >
+              Item / Subcategory <ArrowUpDown size={10} className="inline ml-1" />
+            </th>
+
             <th 
               className="px-6 py-4 cursor-pointer hover:text-stone-900"
               onClick={() => requestSort('brand')}
@@ -101,9 +108,22 @@ const ItemsTable = ({
 
                   <div>
                     <p className="text-sm font-semibold">{item.name}</p>
-                    <p className="text-[10px] text-stone-400 uppercase font-bold tracking-tighter">
-                      {item.category}
-                    </p>
+                    {/* 2. 分类与子分类容器 */}
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-[10px] text-stone-400 uppercase font-bold tracking-tighter">
+                        {item.category}
+                      </p>
+                      
+                      {/* 分隔符：只有当子分类存在时才显示 */}
+                      {item.subcategory && (
+                        <>
+                          <span className="text-[10px] text-stone-300">•</span>
+                          <p className="text-[10px] text-stone-400 uppercase font-bold tracking-tighter">
+                            {item.subcategory}
+                          </p>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
               </td>
@@ -132,7 +152,7 @@ const ItemsTable = ({
                     onClick={() => logUsage(item.id)}
                     className="p-2 bg-stone-100 text-stone-400 hover:bg-stone-900 hover:text-white rounded-xl transition-all shadow-sm"
                   >
-                    <CheckCircle2 size={12} /> 
+                    <CheckCircle2 size={15} /> 
                   </button>
 
                   {/* Edit Item Button */}

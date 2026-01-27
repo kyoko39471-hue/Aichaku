@@ -34,7 +34,7 @@ const App = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortConfig, setSortConfig] = useState({ key: 'price', direction: 'desc' });
+  const [sortConfig, setSortConfig] = useState({ key: 'cpu', direction: 'desc' });
   const [showAddModal, setShowAddModal] = useState(false);
 
 // Inside App component:
@@ -63,8 +63,13 @@ const App = () => {
         return compareByCPU(a, b, sortConfig.direction);
       }
 
-      const valA = a[sortConfig.key];
-      const valB = b[sortConfig.key];
+      let valA = a[sortConfig.key];
+      let valB = b[sortConfig.key];
+
+      if (sortConfig.key === 'brand' || sortConfig.key === 'subcategory') {
+        valA = (valA || '').toLowerCase();
+        valB = (valB || '').toLowerCase();
+      }
 
       if (valA < valB) return sortConfig.direction === 'asc' ? -1 : 1;
       if (valA > valB) return sortConfig.direction === 'asc' ? 1 : -1;
