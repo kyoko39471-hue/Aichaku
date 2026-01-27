@@ -1,6 +1,8 @@
 import { ArrowUpDown, CheckCircle2, Filter, Pencil, Trash2} from 'lucide-react';
 import { calculateCPU } from '../../utils/calculations';
 import Icon from '../Icon';
+import { useState } from 'react'; 
+import EditItemModal from '../modals/EditItemModal';
 
 const renderItemIcon = (item, size = 40) => {
   if (!item.iconType || !item.iconValue) return null;
@@ -20,8 +22,26 @@ const ItemsTable = ({
   items,
   activeCategory,
   requestSort,
-  logUsage
+  logUsage,
+  deleteItem,
+  updateItem, // <-- NEW PROP
+  user, // <-- NEW PROP
+  categoriesData, 
+  setCategoriesData, 
 }) => {
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [itemToEdit, setItemToEdit] = useState(null);
+
+  const handleEditClick = (item) => {
+    setItemToEdit(item);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsEditModalOpen(false);
+    setItemToEdit(null);
+  };
+  console.log('categoriesData:', categoriesData);
   return (
     <div className="bg-white rounded-3xl border border-stone-200 shadow-sm overflow-hidden">
       <div className="px-6 py-4 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
@@ -106,6 +126,7 @@ const ItemsTable = ({
 
               <td className="px-6 py-4 text-right">
                 <div className="flex items-center justify-end gap-1.5">
+                  {/* Log Usage Button */}
                   <button
                     title="Log Usage"
                     onClick={() => logUsage(item.id)}
@@ -113,12 +134,17 @@ const ItemsTable = ({
                   >
                     <CheckCircle2 size={12} /> 
                   </button>
-                  <button 
+
+                  {/* Edit Item Button */}
+                  <button
                     title="Edit Item"
+                    onClick={() => handleEditClick(item)} // <-- UPDATE HANDLER
                     className="p-2 bg-stone-100 text-stone-400 hover:bg-stone-900 hover:text-white rounded-xl transition-all shadow-sm"
                   >
                     <Pencil size={15} />
                   </button>
+
+                  {/* Delete Item Button */}
                   <button 
                     onClick={() => deleteItem(item.id)}
                     title="Delete Item"
@@ -132,6 +158,18 @@ const ItemsTable = ({
           ))}
         </tbody>
       </table>
+      
+      {/* RENDER THE MODAL */}
+
+      {isEditModalOpen && itemToEdit && (
+        <EditItemModal 
+          isOpen={isEditModalOpen} 
+          onClose={handleCloseModal}
+          item={itemToEdit}
+          categoriesData={categoriesData}
+          updateItem={updateItem}
+        />
+      )}
     </div>
   );
 };

@@ -4,7 +4,8 @@ import {
   getItems,
   addItem as addItemToDB,
   incrementItemUsage,
-  deleteItem as deleteItemFromDB
+  deleteItem as deleteItemFromDB,
+  updateItem as updateItemInDB
 } from '../services/firestoreService';
 
 export const useItems = (user) => {
@@ -55,11 +56,26 @@ export const useItems = (user) => {
     setItems(prev => prev.filter(item => item.id !== itemId));
   };
 
+  const updateItem = async (itemId, updatedData) => {
+    if (!user) return;
+
+    await updateItemInDB(user.uid, itemId, updatedData);
+
+    setItems(prev =>
+      prev.map(item =>
+        item.id === itemId
+          ? { ...item, ...updatedData }
+          : item
+      )
+    );
+  }
+
   return {
     items,
     loading,
     addItem,
     logUsage,
-    deleteItem
+    deleteItem,
+    updateItem
   };
 };

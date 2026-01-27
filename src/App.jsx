@@ -26,7 +26,7 @@ import ItemsTable from './components/dashboard/ItemsTable';
 import AuthModal from './components/modals/AuthModal';
 import AddItemModal from './components/modals/AddItemModal';
 import { calculateCPU, calculateAverageCPU, compareByCPU } from './utils/calculations';
-
+ 
 // --- Main App Component ---
 const App = () => {
   // State Management
@@ -47,7 +47,8 @@ const App = () => {
     loading,
     addItem,
     logUsage,
-    deleteItem
+    deleteItem,
+    updateItem
   } = useItems(user);
 
   const filteredAndSortedItems = useMemo(() => {
@@ -195,6 +196,10 @@ const App = () => {
               activeCategory={activeCategory}
               requestSort={requestSort}
               logUsage={logUsage}
+              deleteItem={deleteItem}
+              updateItem={updateItem}
+              categoriesData={categoriesData}       // 之前忘了加了
+              setCategoriesData={setCategoriesData} // 之前忘了加了
             />
           </div>
       </main>

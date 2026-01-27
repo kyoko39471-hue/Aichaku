@@ -1,10 +1,6 @@
 # Ticket
--> EditItemModal.jsx
 -> ItemsTable.jsx
-    1) three buttons
-        a. log
-        b. edit
-        c. delete
+    1) log
     2) category 旁边是要写 subcategory的  
     3) sorting：brand也要可以排序哦，by default怎么是price呢？
     4) filter功能是死的
@@ -21,6 +17,16 @@
 -> Other: 新用户没有试用功能
 
 # Progress
+22. ItemsTable.jsx - log
+
+21. ItemsTable.jsx - delete & edit - Jan 26 2026
+20. EditItemModal.jsx - Jan 26 2026
+    1) [x] designed the UI
+    2) [x] all the way to brand & subcategory
+    3) [x] Item Name
+    4) [x] Price & Times Used
+    5) [x] submit button
+    6) [x] EditItemModal.jsx testing
 19. firestoreService.js 有了edit功能。
 18. ItemsTable.jsx - design
     1) log, edit, delete three button appearances 

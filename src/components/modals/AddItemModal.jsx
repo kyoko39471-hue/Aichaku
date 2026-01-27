@@ -242,11 +242,8 @@ const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData
         subcategory: formData.subcategory,
         price: parseFloat(formData.price) || 0,
         uses: parseInt(formData.timesUsed) || 0,
-
-         // ⭐ 新增
         iconType: formData.icon?.type ?? null,
-        iconValue: formData.icon?.value ?? null,
-      };
+        iconValue: formData.icon?.value ?? null };
 
       // 👇 唯一的“写入动作”
       await addItem(newItem);
@@ -410,7 +407,7 @@ const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData
                     />
                     </div>
 
-                    {/* 5. Price & 6. Times Used */}
+                    {/* 4. Price & Times Used */}
                     <div className="grid grid-cols-2 gap-6">
                     <div>
                         <label className="block text-[10px] font-bold uppercase tracking-widest text-stone-400 mb-2">Price ($)</label>
@@ -436,7 +433,8 @@ const AddItemModal = ({ isOpen, onClose, user, categoriesData, setCategoriesData
                         />
                     </div>
                     </div>
-
+                    
+                    {/* 5. 提交按钮 */}
                     <button 
                     type="submit" 
                     className="w-full py-5 bg-stone-900 text-white rounded-[24px] font-bold uppercase tracking-[0.2em] text-sm shadow-xl hover:bg-stone-800 transition-all hover:-translate-y-1 active:translate-y-0"
