@@ -25,6 +25,7 @@ import { useItems } from './hooks/useItems';
 import ItemsTable from './components/dashboard/ItemsTable';
 import AuthModal from './components/modals/AuthModal';
 import AddItemModal from './components/modals/AddItemModal';
+import DailyJournal from './pages/DailyJournal';
 import { calculateCPU, calculateAverageCPU, compareByCPU } from './utils/calculations';
  
 // --- Main App Component ---
@@ -88,6 +89,8 @@ const App = () => {
   };
 
   const avgCPU = calculateAverageCPU(items).toFixed(2);
+
+  const isJournalPage = activeCategory === 'Journal';
   
   // --- 子组件: 管理列表 (Sub-component: Management Views) ---
 
@@ -156,6 +159,7 @@ const App = () => {
       {/* 2 Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
+      {!isJournalPage && (  
         <header className="h-20 bg-white border-b border-stone-200 flex items-center justify-between px-8">
           <div className="flex items-center bg-stone-100 px-4 py-2 rounded-full w-96">
             <Search size={16} className="text-stone-400 mr-2" />
@@ -173,8 +177,28 @@ const App = () => {
             <Plus size={18} /> Add New Item
           </button>
         </header>
+      )}
+        
+        {isJournalPage && (  
+        <header className="h-20 bg-white border-b border-stone-200 flex items-center justify-between px-8">
+          
+          <h2 className="text-lg font-serif">
+            Daily Journal
+          </h2>
+  
+        </header>
+      )}
 
         {/* Scrollable Content */}
+
+      {isJournalPage ? (
+        <div className="flex-1 overflow-y-auto p-8">
+      <DailyJournal
+        user={user}
+        onSwitchTab={setActiveCategory}
+      />
+        </div>
+      ) : (
         <div className="flex-1 overflow-y-auto p-8 space-y-8">
           {/* Stats Grid */}
           <div className="grid grid-cols-3 gap-6">
@@ -195,18 +219,18 @@ const App = () => {
             </div>
           </div>
 
-            {/* Data Table */}
-            <ItemsTable
-              items={filteredAndSortedItems}
-              activeCategory={activeCategory}
-              requestSort={requestSort}
-              logUsage={logUsage}
-              deleteItem={deleteItem}
-              updateItem={updateItem}
-              categoriesData={categoriesData}       // 之前忘了加了
-              setCategoriesData={setCategoriesData} // 之前忘了加了
-            />
-          </div>
+          {/* Data Table */}
+          <ItemsTable
+            items={filteredAndSortedItems}
+            activeCategory={activeCategory}
+            requestSort={requestSort}
+            logUsage={logUsage}
+            deleteItem={deleteItem}
+            updateItem={updateItem}
+            categoriesData={categoriesData}       // 之前忘了加了
+            setCategoriesData={setCategoriesData} // 之前忘了加了
+          />
+        </div>)}
       </main>
 
       {/* 3 弹窗 Auth Modal */}

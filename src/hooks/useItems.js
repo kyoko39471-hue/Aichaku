@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import {
   getItems,
   addItem as addItemToDB,
-  incrementItemUsage,
+  logItemUsageWithJournal,
   deleteItem as deleteItemFromDB,
   updateItem as updateItemInDB
 } from '../services/firestoreService';
@@ -56,7 +56,10 @@ export const useItems = (user) => {
 
     const localDate = getLocalDateString();
 
-    await incrementItemUsage(user.uid, itemId, localDate);
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+
+    await logItemUsageWithJournal(user.uid, item, localDate);
 
     setItems(prev =>
       prev.map(item =>

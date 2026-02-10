@@ -1,24 +1,72 @@
 # Ticket
+-> Journal page
+
 -> ItemsTable.jsx
-    1) log
-    2) category 旁边是要写 subcategory的  
-    3) sorting：brand也要可以排序哦，by default怎么是price呢？
-    4) filter功能是死的
+    1) filter功能是死的
         - All Items
         - Best Value (CPU < $3)
         - Neglected (< 5 uses)
         - New Arrivals (Added Recently)
         - Cost-Heavy (CPU>$20)
-    5) Search: 不能search for brand？？？不能search for category？？？
-    6) 是不是得加一个subcategory的单独列，来排序
+    2) Search: 不能search for brand？？？不能search for category？？？
 -> StatsGrid.jsx
     1) reward design: Reward = Σ（每个 item 的 CPU 下降量
--> Journal page
 -> Other: 新用户没有试用功能
+-> Daily Journal Page: “Quick log recent”: show last ~20 items based on lastUsedAt (requires a paginated query like orderBy('lastUsedAt','desc') limit(20)), or based on recent journal events (no need to scan all items).
 
 # Progress
-22. ItemsTable.jsx - log
 
+  Daily journal 
+
+  - Goal: Record a true per-day usage journal where each “Log Usage” click creates a distinct event (duplicates allowed), and display events grouped by category for that day.
+  - Data model (Firestore):
+      - Day container: users/{uid}/journalDays/{YYYY-MM-DD}
+      - Event stream: users/{uid}/journalDays/{YYYY-MM-DD}/events/{eventId} (one doc per log action)
+  - Event document (per log action):
+      - Required: createdAt (server timestamp), itemId
+      - Snapshot fields (to keep history stable + survive deletes): category (Closet/Beauty/Appliances), itemName, brand
+      - Optional snapshots if useful later: subcategory, iconType, iconValue, price
+  - Logging behavior:
+      - Each tap appends a new event doc for that date.
+      - Logging the same item multiple times creates multiple event docs (shown multiple times).
+  - Display behavior (Daily view):
+      - Header shows the selected date (e.g. Jan 30, 2026).
+      - Events are grouped by category using the snapshot category.
+      - Only render category sections that have at least one event that day (no empty “Appliances” section).
+      - Within each category, show events in chronological order; duplicates remain visible.
+  - Edits and deletes:
+      - Editing an item later does not rewrite old journal entries for the snapshot fields you keep stable (category/itemName/brand remain as logged).
+      - Deleting an item does not affect existing journal events because they contain the snapshot fields needed for display.
+  - Implementation shape (for later coding):
+      - Add Firestore service functions to create/read day + append events.
+      - Add a useJournal(selectedDate) hook to load that day’s events and expose logEvent(item) and date navigation helpers.
+      - Implement src/pages/DailyJournal.jsx as UI that consumes useJournal + items list for picking/logging.
+  -  keep journaling driven by ItemsTable.jsx “Log Usage”.
+      - Implement a single service function that does both writes: increment uses on the item + append a journalDays/{YYYY-MM-DD}/events/{eventId} doc with snapshot fields.
+      - useItems.logUsage(itemId) calls that unified function, so every existing log action automatically produces a journal event.
+  - Daily Journal page (initially view-first):
+      - DailyJournal.jsx loads journalDays/{date}/events and renders grouped sections (only categories that exist that day).
+      - No “pick any item” UI needed to meet your journaling workflow.
+
+• Start with Firestore + hook, then UI.
+
+  - src/services/firestoreService.js: add the journal day/event CRUD (append event, fetch events for a date). This defines the data contract everything else uses.
+  - src/hooks/useJournal.js (new): wraps those service calls, manages selectedDate, events, loading/error, and exposes logUsageEvent(item) / date navigation.
+  - Then src/pages/DailyJournal.jsx: render grouped events + item picker, wired to useJournal.
+
+
+
+  
+
+
+
+
+22. ItemsTable.jsx - sorting
+    1) [x] log
+    2) [x] render subcategory
+    3) [x] subcategory can be sorted
+    4) [x] subcategory & brand need to be toLowerCase();
+    5) [x] by default怎么是price呢？应该是category
 21. ItemsTable.jsx - delete & edit - Jan 26 2026
 20. EditItemModal.jsx - Jan 26 2026
     1) [x] designed the UI
