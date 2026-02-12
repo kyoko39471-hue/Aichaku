@@ -193,10 +193,12 @@ const App = () => {
 
       {isJournalPage ? (
         <div className="flex-1 overflow-y-auto p-8">
+      
       <DailyJournal
         user={user}
         onSwitchTab={setActiveCategory}
       />
+      
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto p-8 space-y-8">
