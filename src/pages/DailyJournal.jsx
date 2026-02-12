@@ -1,4 +1,4 @@
-  import { useMemo } from 'react';
+import { useMemo } from 'react';
   import {
     Package,
     Sparkles,
@@ -10,29 +10,14 @@
   } from 'lucide-react';
   import { useJournal } from '../hooks/useJournal';
 
-  const formatDate = (dateStr) => {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return dateStr;
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
-  // --- Daily Journal View (Aichaku data model) ---
   const DailyJournal = ({ user, onSwitchTab }) => {
-    const {
-      selectedDate,
-      events,
-      eventsByCategory,
-      loading,
-      goPrevDay,
-      goNextDay,
-      goToday
-    } = useJournal(user);
+    const { journalEntries, totalLogs, loading, removeEvent } = useJournal(user);
 
-    const totalLogs = useMemo(() => events.length, [events]);
+    const categoryIcons = useMemo(() => ({
+      Closet: <Package size={14} />,
+      Beauty: <Sparkles size={14} />,
+      Appliances: <Coffee size={14} />,
+    }), []);
 
     if (loading) {
       return (
@@ -45,12 +30,12 @@
       );
     }
 
-    if (!events || events.length === 0) {
+    if (!journalEntries || journalEntries.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center py-20 text-stone-400">
           <Clock size={48} className="mb-4 opacity-20" />
           <p className="font-serif italic text-lg text-center px-4 mb-6">
-            No entries yet for this day. Start logging to build your story.
+            No entries yet. Start logging to build your story.
           </p>
           <button
             onClick={() => onSwitchTab?.('All')}
@@ -61,12 +46,6 @@
         </div>
       );
     }
-
-    const categoryIcons = {
-      Closet: <Package size={14} />,
-      Beauty: <Sparkles size={14} />,
-      Appliances: <Coffee size={14} />,
-    };
 
     return (
       <div className="max-w-2xl mx-auto pb-20">
@@ -80,51 +59,59 @@
           </div>
           <div className="w-1 h-1 rounded-full bg-stone-300"></div>
           <div className="text-xs text-stone-400 uppercase tracking-widest font-bold">
-            {formatDate(selectedDate)}
-          </div>
-
-          {/* 日期导航（可选） */}
-          <div className="ml-auto flex items-center gap-2 text-xs text-stone-400">
-            <button onClick={goPrevDay} className="hover:text-stone-900">Prev</button>
-            <button onClick={goToday} className="hover:text-stone-900">Today</button>
-            <button onClick={goNextDay} className="hover:text-stone-900">Next</button>
+            All Days
           </div>
         </div>
 
-        {/* Timeline for single day */}
+        {/* Timeline */}
         <div className="space-y-12">
-          <section className="relative pl-10 border-l border-stone-200 ml-2">
-            <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-stone-900 shadow-[0_0_0_4px_rgba(255,255,255,1)]"></div>
-            <h2 className="text-lg font-serif italic mb-6 text-stone-800 leading-none">
-              {formatDate(selectedDate)}
-            </h2>
+          {journalEntries.map((entry) => (
+            <section key={entry.date} className="relative pl-10 border-l border-stone-200 ml-2">
+              <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-stone-900 shadow-[0_0_0_4px_rgba(255,255,255,1)]"></div>
+              <h2 className="text-lg font-serif italic mb-6 text-stone-800 leading-none">
+                {entry.formattedDate}
+              </h2>
 
-            <div className="space-y-4">
-              {Object.entries(eventsByCategory).map(([catName, itemList]) => (
-                <div key={catName} className="group">
-                  <div className="flex items-center gap-2 mb-2 text-stone-400">
-                    {categoryIcons[catName] || <Calendar size={14} />}
-                    <span className="text-[9px] font-bold uppercase tracking-[0.2em]">
-                      {catName}
-                    </span>
-                  </div>
+              <div className="space-y-4">
+                {Object.entries(entry.categories).map(([catName, itemList]) => (
+                  <div key={catName} className="group">
+                    <div className="flex items-center gap-2 mb-2 text-stone-400">
+                      {categoryIcons[catName] || <Calendar size={14} />}
+                      <span className="text-[9px] font-bold uppercase tracking-[0.2em]">
+                        {catName}
+                      </span>
+                    </div>
 
-                  <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm group-hover:border-stone-200 transition-colors">
-                    <ul className="space-y-2">
-                      {itemList.map((event) => (
-                        <li key={event.id} className="text-sm text-stone-600 flex items-start gap-2">
-                          <span className="text-stone-300 font-serif leading-tight">•</span>
-                          <span className="leading-tight">
-                            {event.brand || 'Unknown'} * {event.itemName || 'Unnamed'}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="bg-white p-4 rounded-2xl border border-stone-100 shadow-sm group-hover:border-stone-200 transition-colors">
+                      <ul className="space-y-2">
+                          {itemList.map((event) => (
+                            <li key={event.id} className="text-sm text-stone-600 flex items-start justify-between gap-2">
+                              <span className="flex items-start gap-2">
+                                <span className="text-stone-300 font-serif leading-tight">•</span>
+                                <span className="leading-tight">
+                                  {event.brand || 'Unknown'} * {event.itemName || 'Unnamed'}
+                                </span>
+                              </span>
+
+                              <button
+                                onClick={() => {
+                                    if (!window.confirm('Delete this entry?')) return;
+                                    removeEvent(entry.date, event);
+                                  }}
+                                className="text-xs text-stone-400 hover:text-red-500"
+                                title="Delete entry"
+                              >
+                                Delete
+                              </button>
+                            </li>
+                          ))}
+                      </ul>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </section>
+                ))}
+              </div>
+            </section>
+          ))}
         </div>
       </div>
     );

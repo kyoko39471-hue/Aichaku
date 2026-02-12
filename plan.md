@@ -1,6 +1,7 @@
 # Ticket
--> Journal page
-
+-> sandbox
+-> JournalPage 
+    1) UI需要修改一下，目前每一条entry都占有一行的记录，太占用空间了。 比如只显示10天，剩下的load more
 -> ItemsTable.jsx
     1) filter功能是死的
         - All Items
@@ -15,10 +16,13 @@
 -> Daily Journal Page: “Quick log recent”: show last ~20 items based on lastUsedAt (requires a paginated query like orderBy('lastUsedAt','desc') limit(20)), or based on recent journal events (no need to scan all items).
 
 # Progress
+ 25. Journal Page - delete function
+ 24. Journal Page - fixed an error
+ 23. Journal Page 
+  Daily journal Page
 
-  Daily journal 
+    Goal: Record a true per-day usage journal where each “Log Usage” click creates a distinct event (duplicates allowed), and display events grouped by category for that day.
 
-  - Goal: Record a true per-day usage journal where each “Log Usage” click creates a distinct event (duplicates allowed), and display events grouped by category for that day.
   - Data model (Firestore):
       - Day container: users/{uid}/journalDays/{YYYY-MM-DD}
       - Event stream: users/{uid}/journalDays/{YYYY-MM-DD}/events/{eventId} (one doc per log action)
@@ -49,17 +53,6 @@
       - No “pick any item” UI needed to meet your journaling workflow.
 
 • Start with Firestore + hook, then UI.
-
-  - src/services/firestoreService.js: add the journal day/event CRUD (append event, fetch events for a date). This defines the data contract everything else uses.
-  - src/hooks/useJournal.js (new): wraps those service calls, manages selectedDate, events, loading/error, and exposes logUsageEvent(item) / date navigation.
-  - Then src/pages/DailyJournal.jsx: render grouped events + item picker, wired to useJournal.
-
-
-
-  
-
-
-
 
 22. ItemsTable.jsx - sorting
     1) [x] log

@@ -1,65 +1,95 @@
-  // src/hooks/useJournal.js
   import { useEffect, useMemo, useState } from 'react';
-  import { getJournalEventsForDay } from '../services/firestoreService';
+  import { getJournalDays, getJournalEventsForDay, deleteJournalEventAndDecrementItem } from '../services/firestoreService';
 
-  const getLocalDateString = (date = new Date()) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
-  const addDays = (dateString, delta) => {
-    const [y, m, d] = dateString.split('-').map(Number);
-    const date = new Date(y, m - 1, d);
-    date.setDate(date.getDate() + delta);
-    return getLocalDateString(date);
-  };
-
-  export const useJournal = (user, initialDate) => {
-    const [selectedDate, setSelectedDate] = useState(
-      initialDate || getLocalDateString()
-    );
-    const [events, setEvents] = useState([]);
+  export const useJournal = (user) => {
+    const [journalEntries, setJournalEntries] = useState([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
       if (!user) {
-        setEvents([]);
+        setJournalEntries([]);
         return;
       }
 
-      const fetchEvents = async () => {
+      const fetchTimeline = async () => {
         setLoading(true);
-        const data = await getJournalEventsForDay(user.uid, selectedDate);
-        setEvents(data);
+
+        // 1) 先拿到所有有日志的日期
+        const days = await getJournalDays(user.uid);
+
+        // 2) 再按日期拿 events，并分组到 categories
+        const entries = await Promise.all(
+          days.map(async (day) => {
+            const events = await getJournalEventsForDay(user.uid, day.id);
+            const categories = events.reduce((acc, event) => {
+              const key = event.category || 'Uncategorized';
+              if (!acc[key]) acc[key] = [];
+              acc[key].push(event);
+              return acc;
+            }, {});
+
+            return {
+              date: day.id,
+              formattedDate: formatDate(day.id),
+              categories
+            };
+          })
+        );
+
+        setJournalEntries(entries);
         setLoading(false);
       };
 
-      fetchEvents();
-    }, [user, selectedDate]);
+      fetchTimeline();
+    }, [user]);
 
-    const goPrevDay = () => setSelectedDate(d => addDays(d, -1));
-    const goNextDay = () => setSelectedDate(d => addDays(d, 1));
-    const goToday = () => setSelectedDate(getLocalDateString());
+    const totalLogs = useMemo(() => {
+      return journalEntries.reduce((sum, day) => {
+        const count = Object.values(day.categories)
+          .reduce((acc, arr) => acc + arr.length, 0);
+        return sum + count;
+      }, 0);
+    }, [journalEntries]);
 
-    const eventsByCategory = useMemo(() => {
-      return events.reduce((acc, event) => {
-        const key = event.category || 'Uncategorized';
-        if (!acc[key]) acc[key] = [];
-        acc[key].push(event);
-        return acc;
-      }, {});
-    }, [events]);
+    const removeEvent = async (dateId, event) => {
+        if (!user) return;
+
+        await deleteJournalEventAndDecrementItem(user.uid, dateId, event);
+
+        setJournalEntries(prev =>
+        prev
+            .map(day => {
+            if (day.date !== dateId) return day;
+
+            const newCategories = Object.fromEntries(
+                Object.entries(day.categories).map(([cat, list]) => [
+                cat,
+                list.filter(ev => ev.id !== event.id)
+                ])
+            );
+
+            return { ...day, categories: newCategories };
+            })
+            .filter(day =>
+            Object.values(day.categories).some(list => list.length > 0)
+            )
+        );
+    };
 
     return {
-      selectedDate,
-      setSelectedDate,
-      events,
-      eventsByCategory,
+      journalEntries,
+      totalLogs,
       loading,
-      goPrevDay,
-      goNextDay,
-      goToday
+      removeEvent
     };
   };

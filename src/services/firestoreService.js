@@ -102,16 +102,27 @@ export const updateItem = async (uid, itemId, updates) => {
 
 // ---------- newly add by Sijin: Journal ----------
 
-export const getJournalEventsForDay = async (uid, localDate) => {
-    const dayRef = doc(db, 'users', uid, 'journalDays', localDate);
-    const eventsRef = collection(dayRef, 'events');
-    const q = query(eventsRef, orderBy('createdAt', 'asc'));
+  export const getJournalDays = async (uid) => {
+    const ref = collection(db, 'users', uid, 'journalDays');
+    const q = query(ref, orderBy('date', 'desc'));
     const snap = await getDocs(q);
 
     return snap.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
+  };
+
+export const getJournalEventsForDay = async (uid, localDate) => {
+  const dayRef = doc(db, 'users', uid, 'journalDays', localDate);
+  const eventsRef = collection(dayRef, 'events');
+  const q = query(eventsRef, orderBy('createdAt', 'asc'));
+  const snap = await getDocs(q);
+
+  return snap.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data()
+  }));
 };
 
 export const logItemUsageWithJournal = async (uid, itemSnapshot, localDate) => {
@@ -154,4 +165,24 @@ export const logItemUsageWithJournal = async (uid, itemSnapshot, localDate) => {
     id: eventRef.id,
     ...eventPayload
   };
+};
+
+/* old code - forgot to increment(-1);
+export const deleteJournalEvent = async (uid, dateId, eventId) => {
+  const eventRef = doc(db, 'users', uid, 'journalDays', dateId, 'events', eventId);
+  await deleteDoc(eventRef);
+};
+*/
+
+export const deleteJournalEventAndDecrementItem = async (uid, dateId, event) => {
+  const eventRef = doc(db, 'users', uid, 'journalDays', dateId, 'events', event.id);
+  const itemRef = doc(db, 'users', uid, 'items', event.itemId);
+
+  const batch = writeBatch(db);
+  batch.delete(eventRef);
+  batch.update(itemRef, {
+    uses: increment(-1)
+  });
+
+  await batch.commit();
 };
